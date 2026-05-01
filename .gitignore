@@ -1,0 +1,40 @@
+# ===== Node / npm =====
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ===== Environment files (NEVER commit secrets) =====
+.env
+.env.local
+.env.*.local
+.env.production
+
+# ===== Next.js =====
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/next-env.d.ts
+*.tsbuildinfo
+
+# ===== Backend local files =====
+backend/bills/
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== Vercel =====
+.vercel
+
+# ===== IDEs =====
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# ===== Logs =====
+*.log
+logs/
