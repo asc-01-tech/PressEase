@@ -127,7 +127,7 @@ export default function NewOrderPage() {
         notes,
       });
 
-      router.push(`/orders/${order._id}`);
+      router.push(`/orders/detail?id=${order._id}`);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to create order');
     } finally {

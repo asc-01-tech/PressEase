@@ -62,8 +62,10 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="form-stack">
             <div className="form-group">
-              <label className="form-label">Username <span className="req">*</span></label>
+              <label className="form-label" htmlFor="username">Username <span className="req">*</span></label>
               <input
+                id="username"
+                name="username"
                 className="form-input"
                 type="text"
                 placeholder="admin"
@@ -75,9 +77,11 @@ export default function LoginPage() {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Password <span className="req">*</span></label>
+              <label className="form-label" htmlFor="password">Password <span className="req">*</span></label>
               <div style={{ position: 'relative' }}>
                 <input
+                  id="password"
+                  name="password"
                   className="form-input"
                   type={showPw ? 'text' : 'password'}
                   placeholder="••••••••"
@@ -90,6 +94,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPw(v => !v)}
+                  aria-label={showPw ? 'Hide password' : 'Show password'}
                   style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4 }}
                 >
                   {showPw

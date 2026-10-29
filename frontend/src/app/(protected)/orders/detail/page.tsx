@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import AppLayout from '@/components/AppLayout';
 import { ordersApi, Order } from '@/lib/api';
@@ -20,13 +19,26 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function OrderDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const [id, setId]                   = useState<string | null>(null);
   const [order, setOrder]             = useState<Order | null>(null);
   const [loading, setLoading]         = useState(true);
   const [updating, setUpdating]       = useState(false);
   const [notifying, setNotifying]     = useState(false);
   const [error, setError]             = useState('');
   const [successMsg, setSuccessMsg]   = useState('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlId = urlParams.get('id');
+      if (urlId) {
+        setId(urlId);
+      } else {
+        setError('No Order ID provided');
+        setLoading(false);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (!id) return;

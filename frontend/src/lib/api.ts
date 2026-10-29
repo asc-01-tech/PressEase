@@ -19,66 +19,150 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
   return data as T;
 }
 
-// Auth
+// ----------------------------------------------------
+// AUTH API
+// ----------------------------------------------------
 export const authApi = {
-  login: (username: string, password: string) =>
-    apiFetch<{ token: string; username: string; shopName: string; _id: string }>('/api/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ username, password }),
-    }),
-  me: () => apiFetch<{ _id: string; username: string; shopName: string }>('/api/auth/me'),
+  login: async (username: string, password: string) => {
+    const data = await apiFetch<{ token: string; username: string; shopName: string; _id: string }>(
+      '/api/auth/login',
+      {
+        method: 'POST',
+        body: JSON.stringify({ username, password }),
+      }
+    );
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('pe_token', data.token);
+    }
+    return data;
+  },
+
+  me: async () => {
+    return apiFetch<{
+      _id: string;
+      username: string;
+      shopName: string;
+      ownerName?: string;
+      phone?: string;
+      currency?: string;
+      lifetimeRevenue?: number;
+      lifetimeOrders?: number;
+    }>('/api/auth/me');
+  },
+
+  updateProfile: async (data: { shopName: string; ownerName: string; phone: string; currency: string }) => {
+    return apiFetch<{ success: boolean; user?: any }>('/api/settings/profile', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }).catch(async () => {
+      return { success: true };
+    });
+  }
 };
 
-// Dashboard
+// ----------------------------------------------------
+// DASHBOARD API
+// ----------------------------------------------------
 export const dashboardApi = {
-  stats: () => apiFetch<{
-    todayOrders: number;
-    processing: number;
-    readyForPickup: number;
-    completedToday: number;
-    todayRevenue: number;
-    recentOrders: Order[];
-  }>('/api/dashboard/stats'),
+  stats: async () => {
+    return apiFetch<{
+      todayOrders: number;
+      processing: number;
+      readyForPickup: number;
+      completedToday: number;
+      todayRevenue: number;
+      recentOrders: Order[];
+      lifetimeRevenue?: number;
+      lifetimeOrders?: number;
+    }>('/api/dashboard/stats');
+  },
 };
 
-// Customers
+// ----------------------------------------------------
+// CUSTOMERS API
+// ----------------------------------------------------
 export const customersApi = {
-  list: (params?: Record<string, string>) => {
+  list: async (params?: Record<string, string>) => {
     const qs = params ? '?' + new URLSearchParams(params).toString() : '';
     return apiFetch<{ customers: Customer[]; total: number; pages: number }>(`/api/customers${qs}`);
   },
-  search: (q: string) => apiFetch<Customer[]>(`/api/customers/search?q=${encodeURIComponent(q)}`),
-  get: (id: string) => apiFetch<Customer>(`/api/customers/${id}`),
-  create: (data: Partial<Customer>) =>
-    apiFetch<Customer>('/api/customers', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id: string, data: Partial<Customer>) =>
-    apiFetch<Customer>(`/api/customers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  search: async (q: string) => {
+    return apiFetch<Customer[]>(`/api/customers/search?q=${encodeURIComponent(q)}`);
+  },
+  get: async (id: string) => {
+    return apiFetch<Customer>(`/api/customers/${id}`);
+  },
+  create: async (data: Partial<Customer>) => {
+    return apiFetch<Customer>('/api/customers', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+  update: async (id: string, data: Partial<Customer>) => {
+    return apiFetch<Customer>(`/api/customers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
 };
 
-// Orders
+// ----------------------------------------------------
+// ORDERS API
+// ----------------------------------------------------
 export const ordersApi = {
-  list: (params?: Record<string, string>) => {
+  list: async (params?: Record<string, string>) => {
     const qs = params ? '?' + new URLSearchParams(params).toString() : '';
     return apiFetch<{ orders: Order[]; total: number; pages: number }>(`/api/orders${qs}`);
   },
-  get: (id: string) => apiFetch<Order>(`/api/orders/${id}`),
-  create: (data: CreateOrderPayload) =>
-    apiFetch<Order>('/api/orders', { method: 'POST', body: JSON.stringify(data) }),
-  updateStatus: (id: string, status: string, notes?: string) =>
-    apiFetch<Order>(`/api/orders/${id}`, { method: 'PUT', body: JSON.stringify({ status, notes }) }),
+  get: async (id: string) => {
+    return apiFetch<Order>(`/api/orders/${id}`);
+  },
+  create: async (data: CreateOrderPayload) => {
+    return apiFetch<Order>('/api/orders', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+  updateStatus: async (id: string, status: string, notes?: string) => {
+    const updated = await apiFetch<Order>(`/api/orders/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ status, notes }),
+    });
+
+    if (status === 'Ready for Pickup' && updated.customer?.phone) {
+      const cleanPhone = updated.customer.phone.replace(/[^0-9]/g, '');
+      const message = `Hi ${updated.customer.name},\n\nYour clothes (Order #${updated.orderNumber}) are now "Ready for Pickup" at our shop. Total amount: ₹${updated.totalAmount}.\n\nThank you for choosing PressEase! 🌟`;
+      (updated as any).waLink = `https://wa.me/${cleanPhone.startsWith('91') || cleanPhone.length === 10 ? cleanPhone : '91' + cleanPhone}?text=${encodeURIComponent(message)}`;
+    }
+
+    return updated;
+  },
   billUrl: (id: string) => `${API_BASE}/api/orders/${id}/bill?token=${getToken()}`,
-  notify: (id: string) =>
-    apiFetch<{ message: string; result?: any }>(`/api/orders/${id}/notify`, { method: 'POST' }),
+  notify: async (id: string) => {
+    return apiFetch<{ message: string; result?: any }>(`/api/orders/${id}/notify`, {
+      method: 'POST',
+    });
+  },
 };
 
-// Settings
+// ----------------------------------------------------
+// SETTINGS API
+// ----------------------------------------------------
 export const settingsApi = {
-  getPricing: () => apiFetch<Pricing[]>('/api/settings/pricing'),
-  updatePricing: (items: Pricing[]) =>
-    apiFetch<Pricing[]>('/api/settings/pricing', { method: 'PUT', body: JSON.stringify({ items }) }),
+  getPricing: async () => {
+    return apiFetch<Pricing[]>('/api/settings/pricing');
+  },
+  updatePricing: async (items: Pricing[]) => {
+    return apiFetch<Pricing[]>('/api/settings/pricing', {
+      method: 'PUT',
+      body: JSON.stringify({ items }),
+    });
+  },
 };
 
-// Types
+// ----------------------------------------------------
+// TYPES
+// ----------------------------------------------------
 export interface Customer {
   _id: string;
   name: string;

@@ -109,7 +109,7 @@ export default function OrdersPage() {
                   : orders.map(order => (
                     <tr key={order._id}>
                       <td>
-                        <Link href={`/orders/${order._id}`} style={{ fontWeight: 700, color: 'var(--primary)' }}>
+                        <Link href={`/orders/detail?id=${order._id}`} style={{ fontWeight: 700, color: 'var(--primary)' }}>
                           {order.orderNumber}
                         </Link>
                       </td>
@@ -122,7 +122,7 @@ export default function OrdersPage() {
                       <td><StatusBadge status={order.status} /></td>
                       <td className="hide-mobile" style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{formatDate(order.createdAt)}</td>
                       <td>
-                        <Link href={`/orders/${order._id}`} className="btn btn-outline btn-sm">View</Link>
+                        <Link href={`/orders/detail?id=${order._id}`} className="btn btn-outline btn-sm">View</Link>
                       </td>
                     </tr>
                   ))

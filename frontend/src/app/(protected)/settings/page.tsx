@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import AppLayout from '@/components/AppLayout';
-import { settingsApi, Pricing } from '@/lib/api';
+import { settingsApi, authApi, Pricing } from '@/lib/api';
 import { Spinner } from '@/components/ui';
 
 const CLOTH_TYPES = ['Shirt','Pant','Jeans','Saree','Blazer','Kurta','T-Shirt','Dupatta','Bedsheet'];
@@ -14,14 +14,49 @@ export default function SettingsPage() {
   const [success, setSuccess]     = useState('');
   const [error, setError]         = useState('');
 
+  // Profile states
+  const [profile, setProfile]     = useState({ shopName: '', ownerName: '', phone: '', currency: '₹' });
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileSaving, setProfileSaving]   = useState(false);
+
   useEffect(() => {
+    // Fetch service pricing
     settingsApi.getPricing()
       .then(data => {
         setPricing(data);
         setLoading(false);
       })
       .catch(e => { setError(e.message); setLoading(false); });
+
+    // Fetch user profile
+    authApi.me()
+      .then(p => {
+        setProfile({
+          shopName: p.shopName || '',
+          ownerName: p.ownerName || '',
+          phone: p.phone || '',
+          currency: p.currency || '₹'
+        });
+        setProfileLoading(false);
+      })
+      .catch(() => { setProfileLoading(false); });
   }, []);
+
+  const saveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileSaving(true);
+    setError('');
+    setSuccess('');
+    try {
+      await authApi.updateProfile(profile);
+      setSuccess('✅ Profile updated successfully!');
+      setTimeout(() => setSuccess(''), 4000);
+    } catch (e: any) {
+      setError(e.message || 'Profile save failed');
+    } finally {
+      setProfileSaving(false);
+    }
+  };
 
   const getPrice = (cloth: string, service: string) => {
     return pricing.find(p => p.clothType === cloth && p.serviceType === service)?.price ?? 0;
@@ -56,7 +91,7 @@ export default function SettingsPage() {
 
   return (
     <AppLayout
-      title="Pricing Settings"
+      title="App Settings"
       actions={
         <button className="btn btn-primary" onClick={save} disabled={saving || loading}>
           {saving ? <><Spinner size={16} /> Saving…</> : '💾 Save Prices'}
@@ -65,6 +100,81 @@ export default function SettingsPage() {
     >
       {success && <div className="alert alert-success" style={{ marginBottom: 16 }}>{success}</div>}
       {error   && <div className="alert alert-danger"  style={{ marginBottom: 16 }}>{error}</div>}
+
+      {/* Shop Profile Settings Card */}
+      <div className="card" style={{ marginBottom: 24 }}>
+        <div className="card-header">
+          <h3>Shop &amp; Owner Profile</h3>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
+            Configure your shop name, contact number, owner details, and default currency symbols.
+          </p>
+        </div>
+        {profileLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: 30 }}><Spinner size={24} /></div>
+        ) : (
+          <form onSubmit={saveProfile} className="card-body form-stack">
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Shop Name <span className="req">*</span></label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={profile.shopName}
+                  onChange={e => setProfile(prev => ({ ...prev, shopName: e.target.value }))}
+                  placeholder="e.g. PressEase Laundry"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Owner Name <span className="req">*</span></label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={profile.ownerName}
+                  onChange={e => setProfile(prev => ({ ...prev, ownerName: e.target.value }))}
+                  placeholder="e.g. Abhishek"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Contact Phone Number</label>
+                <input
+                  type="tel"
+                  className="form-input"
+                  value={profile.phone}
+                  onChange={e => setProfile(prev => ({ ...prev, phone: e.target.value }))}
+                  placeholder="e.g. 9999999999"
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Base Currency Symbol <span className="req">*</span></label>
+                <select
+                  className="form-select"
+                  value={profile.currency}
+                  onChange={e => setProfile(prev => ({ ...prev, currency: e.target.value }))}
+                  required
+                  style={{ cursor: 'pointer' }}
+                >
+                  <option value="₹">Rupees (₹)</option>
+                  <option value="$">US Dollar ($)</option>
+                  <option value="€">Euro (€)</option>
+                  <option value="£">Pound (£)</option>
+                  <option value="AED">Dirham (AED)</option>
+                </select>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+              <button type="submit" className="btn btn-accent" disabled={profileSaving}>
+                {profileSaving ? <><Spinner size={16} /> Saving Profile…</> : '👤 Update Profile'}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
 
       <div className="card">
         <div className="card-header">

@@ -1,12 +1,5 @@
-const express = require("express");
-const app = express();
+// Delegate to full Express backend server
+require('dotenv').config({ path: require('path').join(__dirname, 'backend/.env') });
+const app = require('./backend/src/server');
 
-app.get("/", (req, res) => {
-  res.send("PressEase backend running 🚀");
-});
-
-const PORT = 5000;
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+module.exports = app;

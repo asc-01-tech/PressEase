@@ -12,6 +12,8 @@ interface Stats {
   completedToday: number;
   todayRevenue: number;
   recentOrders: Order[];
+  lifetimeRevenue?: number;
+  lifetimeOrders?: number;
 }
 
 const STAT_CARDS = (s: Stats) => [
@@ -82,6 +84,35 @@ export default function DashboardPage() {
             ))}
           </div>
 
+          {/* Lifetime Performance Overview */}
+          <div className="grid-2" style={{ marginBottom: 24 }}>
+            <div className="stat-card" style={{ borderLeft: '4px solid var(--accent)', background: 'linear-gradient(to right, #ffffff, #f0fdf4)', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+              <div className="icon-wrap" style={{ background: '#d1fae5', color: '#10b981', flexShrink: 0 }}>
+                <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>₹</span>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div className="stat-label">Lifetime Revenue</div>
+                <div className="stat-value" style={{ fontSize: '1.65rem', marginTop: 2, fontWeight: 800 }}>
+                  {formatCurrency(stats.lifetimeRevenue || 0)}
+                </div>
+                <div className="stat-sub" style={{ marginTop: 2 }}>Cumulative sales earnings</div>
+              </div>
+            </div>
+
+            <div className="stat-card" style={{ borderLeft: '4px solid var(--primary)', background: 'linear-gradient(to right, #ffffff, #eff6ff)', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+              <div className="icon-wrap" style={{ background: '#dbeafe', color: '#3b82f6', flexShrink: 0 }}>
+                <span style={{ fontSize: '1.2rem' }}>📋</span>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div className="stat-label">Lifetime Orders</div>
+                <div className="stat-value" style={{ fontSize: '1.65rem', marginTop: 2, fontWeight: 800 }}>
+                  {stats.lifetimeOrders || 0}
+                </div>
+                <div className="stat-sub" style={{ marginTop: 2 }}>Total order batches completed</div>
+              </div>
+            </div>
+          </div>
+
           {/* Recent Orders */}
           <div className="card">
             <div className="card-header">
@@ -110,7 +141,7 @@ export default function DashboardPage() {
                     {stats.recentOrders.map(order => (
                       <tr key={order._id}>
                         <td>
-                          <Link href={`/orders/${order._id}`} style={{ fontWeight: 600, color: 'var(--primary)' }}>
+                          <Link href={`/orders/detail?id=${order._id}`} style={{ fontWeight: 600, color: 'var(--primary)' }}>
                             {order.orderNumber}
                           </Link>
                         </td>
